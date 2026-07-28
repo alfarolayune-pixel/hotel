@@ -1556,7 +1556,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme();
     applyBranding();
     setupErrorReporting();
-    setupPinInput();
+    
     populatePaymentMethods();
     setDefaultDateRange();
 
@@ -1780,63 +1780,7 @@ async function authenticateByUID(uid) {
     }
 }
 
-// ── PIN Input con Teclado Nativo ──
-function setupPinInput() {
-    const input = document.getElementById('pin-input');
-    if (!input) return;
-    input.value = '';
-    
-    // Enfocar automáticamente cuando se muestra la sección de PIN
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'style') {
-                const s = document.getElementById('pin-section');
-                if (s && s.style.display !== 'none') {
-                    input.focus();
-                }
-            }
-        });
-    });
-    const s = document.getElementById('pin-section');
-    if (s) observer.observe(s, { attributes: true });
 
-    input.addEventListener('input', (e) => {
-        const val = e.target.value.replace(/[^0-9]/g, '');
-        e.target.value = val;
-        clearStatus('start-status');
-        
-        if (val.length === 4) {
-            input.blur(); // Cierra el teclado móvil
-            authenticateByPin(val);
-        }
-    });
-}
-
-async function authenticateByPin(pin) {
-    showStatus('start-status', 'info', '🔄 Verificando PIN...');
-    const input = document.getElementById('pin-input');
-    try {
-        const res  = await apiFetch('GET', 'auth', { pin, hotel_id: CONFIG.hotelId });
-        const data = unwrapN8n(res);
-        if (!data || data.status === 'not_found') {
-            showStatus('start-status', 'error', 'El PIN ingresado es incorrecto. Acceso denegado.');
-            if (input) {
-                input.value = '';
-                input.focus();
-            }
-            return;
-        }
-        if (input) input.value = '';
-        onLoginSuccess(data);
-    } catch(e) {
-        console.error('PIN auth error:', e);
-        showStatus('start-status', 'error', 'No se pudo conectar con el servidor. Verifica tu conexión a Internet e intenta nuevamente.');
-        if (input) {
-            input.value = '';
-            input.focus();
-        }
-    }
-}
 
 function togglePinSection() {
     const s = document.getElementById('pin-section');
@@ -1845,6 +1789,23 @@ function togglePinSection() {
 
 // ── Post-login ──
 function onLoginSuccess(data, persist = true) {
+    if (data.rol === 'pet') {
+        // Es una mascota en estancia activa: abrimos su modal directamente
+        openPetFromSearch(data.id);
+        return;
+    }
+    if (data.rol === 'hueso') {
+        // Es un hueso libre: si somos recepcionistas, vamos a Check-in directamente
+        if (APP.session && APP.session.rol === 'recepcionista') {
+            switchView('recepcion');
+            switchRecepcionTab('checkin');
+            handleCheckinUID(data.nfc_uid);
+        } else {
+            showStatus('start-status', 'info', `🦴 Hueso libre detectado (${data.nfc_uid}). Inicia sesión para asignarlo.`);
+        }
+        return;
+    }
+
     APP.session = {
         id:       data.id       || data.empleado_id,
         nombre:   data.nombre,
@@ -1894,11 +1855,7 @@ function handleLogout() {
     document.getElementById('app-header').classList.add('hidden');
     switchView('start');
     
-    // Limpiar input de PIN y ocultar sección de PIN al salir
-    const input = document.getElementById('pin-input');
-    if (input) input.value = '';
-    const s = document.getElementById('pin-section');
-    if (s) s.style.display = 'none';
+
     
     clearStatus('start-status');
     setNfcStatusText('Acerca tu hueso NFC', 'Esperando lectura...');
