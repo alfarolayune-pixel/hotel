@@ -1692,7 +1692,7 @@ async function initNfcScan() {
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.addEventListener('reading', ({ serialNumber }) => {
-            const uid = serialNumber.toUpperCase().replace(/:/g,'');
+            const uid = serialNumber.toUpperCase();
             authenticateByUID(uid);
         });
         ndef.addEventListener('readingerror', () => {
@@ -1711,7 +1711,7 @@ function checkUrlNfcParam() {
     const uid = params.get('uid');
     if (uid) {
         history.replaceState({}, document.title, window.location.pathname);
-        authenticateByUID(uid.toUpperCase().replace(/:/g,''));
+        authenticateByUID(uid.toUpperCase());
     }
 }
 
@@ -1908,7 +1908,7 @@ function goToRegistro() {
 async function scanNfcForCheckin() {
     if (!('NDEFReader' in window)) {
         const uid = prompt('iOS: ingresa el UID del hueso (temporal):');
-        if (uid) handleCheckinUID(uid.toUpperCase().replace(/:/g,''));
+        if (uid) handleCheckinUID(uid.toUpperCase());
         return;
     }
     showStatus('checkin-status', 'info', '📡 Acerca el hueso NFC...');
@@ -1916,7 +1916,7 @@ async function scanNfcForCheckin() {
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.addEventListener('reading', ({ serialNumber }) => {
-            handleCheckinUID(serialNumber.toUpperCase().replace(/:/g,''));
+            handleCheckinUID(serialNumber.toUpperCase());
         }, { once: true });
     } catch(e) {
         console.error('NFC checkin error:', e);
@@ -2031,7 +2031,7 @@ function resetCheckinForm() {
 async function scanNfcForCheckout() {
     if (!('NDEFReader' in window)) {
         const uid = prompt('iOS: ingresa el UID del hueso:');
-        if (uid) handleCheckoutUID(uid.toUpperCase().replace(/:/g,''));
+        if (uid) handleCheckoutUID(uid.toUpperCase());
         return;
     }
     showStatus('checkout-status', 'info', '📡 Acerca el hueso NFC...');
@@ -2039,7 +2039,7 @@ async function scanNfcForCheckout() {
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.addEventListener('reading', ({ serialNumber }) => {
-            handleCheckoutUID(serialNumber.toUpperCase().replace(/:/g,''));
+            handleCheckoutUID(serialNumber.toUpperCase());
         }, { once: true });
     } catch(e) {
         console.error('NFC checkout error:', e);
@@ -2401,14 +2401,14 @@ function clearRegistroForm() {
 async function scanNfcForEmpleado() {
     if (!('NDEFReader' in window)) {
         const uid = prompt('iOS: ingresa el UID del hueso:');
-        if (uid) handleEmpleadoUID(uid.toUpperCase().replace(/:/g,''));
+        if (uid) handleEmpleadoUID(uid.toUpperCase());
         return;
     }
     try {
         const ndef = new NDEFReader();
         await ndef.scan();
         ndef.addEventListener('reading', ({ serialNumber }) => {
-            handleEmpleadoUID(serialNumber.toUpperCase().replace(/:/g,''));
+            handleEmpleadoUID(serialNumber.toUpperCase());
         }, { once: true });
     } catch(e) {
         console.error('NFC empleado error:', e);
