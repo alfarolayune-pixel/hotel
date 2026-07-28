@@ -21,7 +21,7 @@
             version: "1.0.0",
 
             // ── Identidad del cliente ──
-            hotelName: "Hotel Patitas Dev Joel Hoy",
+            hotelName: "Hotel Patitas Joel",
             hotelSlogan: "El mejor lugar para tu mejor amigo",
             logoUrl: null,         // null = muestra faviconEmoji como logo
             faviconEmoji: "🐾",
@@ -2534,9 +2534,15 @@
                 clearStatus('checkin-status');
 
                 if (!data || data.status === 'not_found') {
-                    document.getElementById('checkin-mascota-found').classList.add('hidden');
-                    document.getElementById('checkin-new-pet-prompt').classList.remove('hidden');
-                    showStatus('checkin-status', 'info', '🦴 Hueso libre. Selecciona la mascota o registra una nueva para hacer check-in.');
+                    if (APP.checkinMascota) {
+                        document.getElementById('checkin-nfc-status').className = 'status-box success';
+                        document.getElementById('checkin-nfc-status').innerHTML = `✅ Hueso vinculado: <strong>${uid}</strong>`;
+                        showStatus('checkin-status', 'success', `🦴 Hueso libre vinculado correctamente a ${APP.checkinMascota.nombre}.`);
+                    } else {
+                        document.getElementById('checkin-mascota-found').classList.add('hidden');
+                        document.getElementById('checkin-new-pet-prompt').classList.remove('hidden');
+                        showStatus('checkin-status', 'info', '🦴 Hueso libre. Selecciona la mascota o registra una nueva para hacer check-in.');
+                    }
                     return;
                 }
 
@@ -2863,8 +2869,11 @@
 
         function showPetHistorialModal(data) {
             if (!data) return;
+            APP.lastViewedSearchPet = data.mascota || {};
             const visits = data.estancias || [];
-            const pet = data.mascota || {};
+            const pet = APP.lastViewedSearchPet;
+            const hasActiveStay = visits.some(v => !v.fecha_salida);
+            
             // Build a simple modal-like overlay
             let html = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;overflow-y:auto;padding:1rem;">
         <div style="max-width:600px;margin:0 auto;background:var(--bg-card);border-radius:var(--radius-lg);padding:1.5rem;">
@@ -2886,12 +2895,45 @@
                     </div>
                 `).join('')
                 }
+            ${!hasActiveStay ? `
+                <button class="btn btn-primary btn-full mt-2" onclick="startCheckinFromSearch()" style="margin-top:1rem;">
+                    🛎️ Hospedar (Check-In)
+                </button>
+            ` : ''}
         </div>
     </div>`;
             const overlay = document.createElement('div');
             overlay.id = 'pet-historial-overlay';
             overlay.innerHTML = html;
             document.body.appendChild(overlay);
+        }
+
+        function startCheckinFromSearch() {
+            const pet = APP.lastViewedSearchPet;
+            if (!pet) return;
+
+            const modal = document.getElementById('pet-historial-overlay');
+            if (modal) modal.remove();
+
+            APP.checkinMascota = pet;
+            APP.checkinServiciosList = [];
+
+            document.getElementById('checkin-new-pet-prompt').classList.add('hidden');
+            document.getElementById('checkin-mascota-found').classList.remove('hidden');
+            renderPetCard('checkin-pet-card', pet);
+            renderCheckinServices();
+            loadCatalogo();
+
+            if (APP.pendingCheckinUID) {
+                document.getElementById('checkin-nfc-status').className = 'status-box success';
+                document.getElementById('checkin-nfc-status').innerHTML = `✅ Hueso escaneado: <strong>${APP.pendingCheckinUID}</strong>`;
+            } else {
+                document.getElementById('checkin-nfc-status').className = 'status-box info';
+                document.getElementById('checkin-nfc-status').innerHTML = `📡 Acerca un hueso NFC para vincularlo a <strong>${escHtml(pet.nombre)}</strong>`;
+            }
+
+            switchView('recepcion');
+            switchRecepcionTab('checkin');
         }
 
         // ═══════════════════════════════════════════════════════════════════
