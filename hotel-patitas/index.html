@@ -19,7 +19,7 @@
         version: "1.0.0",
 
         // ── Identidad del cliente ──
-        hotelName:    "Hotel Patitas Dev 1.0",
+        hotelName:    "Hotel Patitas Dev",
         hotelSlogan:  "El mejor lugar para tu mejor amigo",
         logoUrl:      null,         // null = muestra faviconEmoji como logo
         faviconEmoji: "🐾",
@@ -944,18 +944,7 @@
             </div>
 
             <!-- PIN manual (fallback) -->
-            <div class="card" id="pin-section" style="display:none;max-width:320px;margin:0 auto;">
-                <p class="text-center mb-2" style="font-size:.9rem;color:var(--text-secondary);">O ingresa tu PIN de empleado</p>
-                <div class="pin-dots" id="pin-dots">
-                    <div class="pin-dot" id="dot-0"></div>
-                    <div class="pin-dot" id="dot-1"></div>
-                    <div class="pin-dot" id="dot-2"></div>
-                    <div class="pin-dot" id="dot-3"></div>
-                </div>
-                <div class="pin-pad" id="pin-pad"></div>
-            </div>
 
-            <button class="btn btn-ghost btn-sm" id="btn-show-pin" onclick="togglePinSection()">🔢 Ingresar con PIN</button>
 
             <div id="start-status" class="status-box hidden" style="max-width:380px;width:100%;"></div>
         </section>
@@ -1781,11 +1770,6 @@ async function authenticateByUID(uid) {
 }
 
 
-
-function togglePinSection() {
-    const s = document.getElementById('pin-section');
-    if (s) s.style.display = s.style.display === 'none' ? 'block' : 'none';
-}
 
 // ── Post-login ──
 function onLoginSuccess(data, persist = true) {
